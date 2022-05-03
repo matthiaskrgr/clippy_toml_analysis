@@ -27,18 +27,23 @@ fn main() {
             .map(|f| f.unwrap().path())
             .collect::<Vec<_>>();
 
-        if !paths.contains(&"clippy.toml".into()) {
+        if !paths.iter().any(|p| {
+            [".clippy.toml", "clippy.toml"].contains(&p.file_name().unwrap().to_str().unwrap())
+        }) {
             continue;
         }
+
         let clippytoml = paths
             .iter()
-            .find(|p| *p == &std::path::PathBuf::from("clippy.toml"))
+            .find(|p| {
+                [".clippy.toml", "clippy.toml"].contains(&p.file_name().unwrap().to_str().unwrap())
+            })
             .cloned()
             .expect("could not find clippy.toml");
 
         let cargotoml = paths
             .iter()
-            .find(|p| *p == &std::path::PathBuf::from("Cargo.toml"))
+            .find(|p| p.file_name().unwrap().to_str().unwrap() == "Cargo.toml")
             .cloned()
             .expect("could not find Cargo.toml");
 
@@ -59,13 +64,21 @@ fn main() {
         match (clippy_msrv, rust_version) {
             (Some(clippy), Some(rust_min)) => {
                 println!(
-                    "{}: clippy-msrv: '{:?}', rust-version: '{:?}'",
-                    p.display(),
+                    "{}: clippy-msrv: '{}', rust-version: '{}'",
+                    p.file_name().unwrap().to_str().unwrap(),
                     clippy,
                     rust_min,
                 )
             }
-            _ => {}
+            (None, Some(_rust_min)) => {}
+            (Some(clippy), None) => {
+                println!(
+                    "{}: clippy-msrv: '{}', rust-version: None",
+                    p.file_name().unwrap().to_str().unwrap(),
+                    clippy
+                )
+            }
+            (None, None) => {}
         }
     }
 }
