@@ -20,6 +20,8 @@ fn main() {
         t
     };  */
 
+    let mut clippy_versions = Vec::new();
+
     for krate in registry_sources {
         let p = krate.unwrap().path();
         let paths = std::fs::read_dir(&p)
@@ -61,6 +63,8 @@ fn main() {
             .lines()
             .find(|line| line.contains("rust-version"));
 
+        clippy_versions.push(clippy_msrv.map(|o| o.to_string()));
+
         match (clippy_msrv, rust_version) {
             (Some(clippy), Some(rust_min)) => {
                 println!(
@@ -81,4 +85,12 @@ fn main() {
             (None, None) => {}
         }
     }
+
+    let count = clippy_versions
+        .iter()
+        .flatten()
+        .map(|v| v.split('=').last().unwrap())
+        .collect::<counter::Counter<_>>();
+
+    dbg!(count);
 }
